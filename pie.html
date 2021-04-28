@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .pie {
+        width: 500px;
+        height: 500px;
+        background: transparent;
+        border-radius: 50%;
+        }
+
+        .pie circle {
+            fill: none;
+            stroke: gold;
+            /* stroke-width: 5; */
+            animation: rotate 1s reverse forwards;
+        }
+        g line{
+            fill : blue;
+            stroke : rgb(255,0,0);
+            stroke-width:0.1;
+            animation: growLine 1s linear forwards;
+        }
+        .label-text{
+            animation: growFont 1s linear forwards;
+            font-size: 2px;
+        }
+        .low-percent{
+            opacity: 0;
+        }
+
+    @keyframes rotate {
+        to{ stroke-dasharray: 0 100;}
+    } 
+    @keyframes growFont {
+        0%{ font-size: 0}
+        100%{font-size : 2px}
+    } 
+    @keyframes growLine {
+        0%{ stroke-width : 0}
+        100%{ stroke-width: 0.1}
+    }
+    </style>
+</head>
+<body>
+    <svg viewBox="-32 -32 64 64" class="pie">
+    </svg>
+    <script>
+        const total = 447000
+        const dataset = [{
+            category : '생활',
+            price : 315000,
+        },
+        {
+            category : '식비',
+            price : 72000,
+        },
+        {
+            category : '교통',
+            price : 18000,
+        },
+        {
+            category : '쇼핑/뷰티',
+            price : 18000,
+        },
+        {
+            category : '의료/건강',
+            price : 9000,
+        },
+        {
+            category : 'asdf',
+            price : 3000,
+        },
+        {
+            category : 'asdf',
+            price : 3000,
+        },
+    ];
+        const colorList = ['yellow', 'red', 'blue', 'purple', 'gray', 'black']
+
+
+        const $svg = document.getElementsByTagName('svg')[0]
+
+        const radius = 7
+        const centerCoordinate = [0, 0]
+
+        const fullAngle = 2*Math.PI;
+
+        let previousAngle = 0
+
+        // 원의 지름
+        const diameter = radius*2
+        // 설명선의 길이
+        const pathLength = 1.5
+
+        // 원의 둘레
+        const circumference = fullAngle * radius
+
+        let strokeDashOffSet = 0
+        
+        dataset.forEach((data, i) => {
+
+            const moneyRatio = (data.price / total)
+            
+            const circleRatio = (moneyRatio * circumference)
+            const circleAngle = (fullAngle * moneyRatio)
+
+            const $g = makeGTag({moneyRatio,circleAngle, circleRatio, i})
+            
+            $svg.appendChild($g)
+
+            previousAngle += circleAngle
+            strokeDashOffSet = strokeDashOffSet - circleRatio
+         })
+
+         function addEvent(event, element, callback){
+            element.addEventListener(event, callback)
+         }
+         function mouseoverHandler(e){
+            const $label = e.target.nextElementSibling
+            $label.classList.remove('low-percent')
+        }
+        function mouseoutHandler(e){
+            const $label = e.target.nextElementSibling
+            $label.classList.add('low-percent')
+        }
+        function makeGTag({moneyRatio, circleAngle, circleRatio, i}){
+            const $g = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+            const x = Math.sin(previousAngle + (circleAngle/2))
+            const y = -Math.cos(previousAngle + (circleAngle/2))
+
+            const $circle = makeCircle(circleRatio, i)
+
+            const $label = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+
+
+            const $line = makeFirstLine(x, y)
+            const $line2 = makeSecondLine(x, y)
+            const $text = makeText(x, y)
+
+
+            console.log(moneyRatio)          
+
+            if(moneyRatio<0.05){
+                addEvent('mouseover', $circle, mouseoverHandler)
+                addEvent('mouseout', $circle, mouseoutHandler)
+                $label.setAttribute('class', 'low-percent')
+            }
+            
+            $label.appendChild($line)
+            $label.appendChild($line2)
+            $label.appendChild($text)
+
+            $g.appendChild($circle)
+            $g.appendChild($label)
+
+            return $g
+         }
+
+        function makeFirstLine(x, y){
+            const $line = document.createElementNS("http://www.w3.org/2000/svg", 'line');
+            $line.setAttribute('x1', diameter * x)
+            $line.setAttribute('x2', diameter * x *pathLength)
+            $line.setAttribute('y1', diameter * y)
+            $line.setAttribute('y2', diameter *y * pathLength)
+            // $line.setAttribute('pathLength', 100)
+            return $line
+         }
+        function makeSecondLine(x, y){
+            const $line2 = document.createElementNS("http://www.w3.org/2000/svg", 'line');
+            const startPointX = diameter*x
+            const startPointY = diameter*y
+            const secondPathLength = x<0 ? -10 : 10
+        
+            $line2.setAttribute('x1', startPointX*pathLength)
+            $line2.setAttribute('y1', startPointY*pathLength)
+            $line2.setAttribute('x2', startPointX+secondPathLength)
+            $line2.setAttribute('y2', startPointY*pathLength)
+
+            return $line2
+         }
+        function makeText(x, y){
+            const $text = document.createElementNS("http://www.w3.org/2000/svg", 'text')
+            const textPositionX = x<0 ? -15 : 10
+            const startPointX = diameter * x
+            const startPointY = diameter * y
+
+            $text.setAttribute('x', startPointX+textPositionX)
+            $text.setAttribute('y', startPointY*pathLength)
+            $text.setAttribute('class', "label-text")
+            $text.textContent = "카테고리"
+
+            return $text
+        }
+        function makeCircle(circleRatio, i){
+            const $circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+            const rotateAngle = 90
+            
+            $circle.setAttribute('transform', `rotate(-${rotateAngle})`)
+            $circle.setAttribute('r', radius)
+            $circle.setAttribute('cx', centerCoordinate[0])
+            $circle.setAttribute('cy', centerCoordinate[1])
+            $circle.setAttribute('fill', 'transparent')
+            $circle.setAttribute('stroke-width', diameter)
+
+            $circle.style.strokeDasharray = `${circleRatio}, 10000`
+            $circle.style.strokeDashoffset = strokeDashOffSet
+            $circle.style.stroke = colorList[i]
+
+            return $circle
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 9px;
+}
+
+.graph .labels.x-labels {
+  text-anchor: middle;
+}
+
+.graph .labels.y-labels {
+  text-anchor: end;
+}
+
+
+.graph {
+  height: 300px;
+  width: 600px;
+}
+
+.graph .grid {
+  stroke: #ccc;
+  stroke-dasharray: 0;
+  stroke-width: 1;
+}
+
+.line{
+  stroke:gray;
+  storke-width:1;
+  opacity: 0.3;
+}
+
+.labels {
+  font-size: 13px;
+}
+
+.label-title {
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 12px;
+  fill: black;
+}
+
+.data {
+  fill: red;
+  stroke-width: 1;
+}
+
+.data circle{
+  fill : black;
+  /* stroke-dasharray: 100;
+  stroke-dashoffset: 100; */
+  animation: stroke;
+  /* animation-duration: 1s; */
+}
+
+.poly-line{
+  stroke:#0074d9;
+  stroke-width:2;
+  fill : none;
+  stroke-dasharray: 10000;
+  stroke-dashoffset: 10000;
+  animation: dash 10s linear forwards;
+}
+.average-line{
+  stroke: #ccc;
+  stroke-dasharray: 1;
+  stroke-width: 1;
+}
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes stroke {
+  from{
+    r: 0;
+  }
+  to{
+    r: 3;
+  }
+}
+  </style>
+</head>
+<body>
+      </svg>
+      <script>
+
+        // 일평균 지출
+        // const average = 23400
+        // 일일 최대 지출
+
+        const dataSet = [
+        {
+          "id": 4,
+          "price": 20000,
+          "content": "20일꺼임",
+          "createdAt": "2020-07-19T22:01:15.000Z",
+          "paymentName": "하나카드",
+          "categoryName": "의료/건강",
+          "isIncome": 0,
+          "iconName": "graph_square"
+        },
+        {
+        "id": 2,
+        "price": 40000,
+        "content": "28일꺼임",
+        "createdAt": "2020-07-27T22:00:19.000Z",
+        "paymentName": "하나카드",
+        "categoryName": "월급",
+        "isIncome": 1,
+        "iconName": "bag_badge_plus"
+        },
+        {
+        "id": 1,
+        "price": 5000,
+        "content": "치킨",
+        "createdAt": "2020-07-28T20:18:23.000Z",
+        "paymentName": "하나카드",
+        "categoryName": "월급",
+        "isIncome": 1,
+        "iconName": "bag_badge_plus"
+        },
+        {
+          "id": 3,
+          "price": 7000,
+          "content": "30일꺼임",
+          "createdAt": "2020-07-29T22:00:54.000Z",
+          "paymentName": "하나카드",
+          "categoryName": "교통",
+          "isIncome": 0,
+          "iconName": "tram_fill"
+        },
+        ]
+
+        // 그래프가 시작하는 지점
+        const startX = 100
+        const startY = 270
+        const endX = 550
+        const endY = 30
+
+        // 현재 월
+        const currentMonth = 7
+
+        // 1월
+        const January = 1
+
+
+        const paddingX = 5
+        const paddingY = 20
+
+        const circlePadding = 5
+        // 해당 월의 마지막 날짜
+        const endOfMonth = new Date(2020, currentMonth, 0).getDate()
+        // 5일 기준
+        const dateInterval = 5
+        
+        const intervalX = (endX-startX)/endOfMonth
+
+        let highestExpense = 0;
+        let totalExpense = 0;
+        let topOfLabel = 0;
+
+        let intervalY = 0
+
+        dataSet.forEach((data) => {
+          if(highestExpense < data.price) highestExpense = data.price
+          totalExpense += data.price
+        })
+        
+        
+        const averageExpense = totalExpense / endOfMonth
+
+        init(600, 300)
+
+        function init(width, height){
+          const $svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg')
+
+          // viewBox="0 0 800 500"
+          // class graph
+          $svg.setAttribute('id', 'line-chart')
+          $svg.setAttribute('class', 'graph')
+          $svg.style = `width : ${width}; height : ${height}`
+          // startY = height - 30
+          // endX = width -50
+          // console.log(startY, endX)
+          // $svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+          // $svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+
+
+        
+        
+        // const axisX = makeAxis(startX, startY, endX, startY)
+        // const axisY = makeAxis(startX, startY, startX, endY)
+        // $svg.appendChild(axisX)
+        // $svg.appendChild(axisY)
+        
+        
+        
+        // console.log(new Date(2020, 7, -1).getDate())
+
+        const dateLabels = makeDateLabel()
+        $svg.appendChild(dateLabels)
+
+        const moneyLabels = makeMoneyLabel()
+        $svg.appendChild(moneyLabels)
+
+        const markers = makeMarkers()
+        $svg.appendChild(markers)
+
+        const averageLine = makeAverageLine()
+        $svg.appendChild(averageLine)
+
+        document.getElementsByTagName('body')[0].appendChild($svg)
+        }
+
+        function makeAxis(startX, startY, endX, endY){
+          const $g = document.createElementNS("http://www.w3.org/2000/svg", 'g')
+          const $line = document.createElementNS("http://www.w3.org/2000/svg", 'line')
+          $g.appendChild($line)
+          return $g
+        }
+
+        function makeMarkers(){
+
+          const circlePadding = 5
+          let startMarkerX = startX + paddingX + circlePadding
+
+          let startDate = 1
+          
+          const $g = document.createElementNS("http://www.w3.org/2000/svg", 'g')
+          $g.setAttribute('class', 'data')
+
+          const $polyLine = document.createElementNS("http://www.w3.org/2000/svg", 'polyline')            
+          $polyLine.setAttribute('class', 'poly-line')
+
+          let i=0
+          let animationDuration = 0
+          while(startDate<=endOfMonth){
+            
+            const $marker = document.createElementNS("http://www.w3.org/2000/svg", 'circle')
+            // /* animation-delay: 0.3s; */
+            $marker.style = `animation-duration: ${animationDuration}s;`
+            $marker.setAttribute('r', 3)
+            $marker.setAttribute('cx', startMarkerX)
+            
+            let previousPoints = $polyLine.getAttribute('points') 
+            if(!previousPoints){
+              previousPoints = ''
+            }
+            if(!dataSet[i] || startDate !== new Date(dataSet[i].createdAt).getDate() ){
+              $marker.setAttribute('cy', startY -4)
+              $polyLine.setAttribute('points', previousPoints + ` ${startMarkerX},${startY - 4}`)
+            }else{
+              let ratio = (dataSet[i].price) / topOfLabel
+              const length = startY - endY
+              $marker.setAttribute('cy', startY - length*ratio-4)
+              $polyLine.setAttribute('points', previousPoints + ` ${startMarkerX},${startY - length*ratio-4}`)
+              i++
+            }
+
+            $g.appendChild($marker)
+            startMarkerX += intervalX
+            startDate++
+            animationDuration += 0.1
+          }
+
+          $g.appendChild($polyLine)
+          return $g
+        }
+        function makeAverageLine(){
+          const $g = document.createElementNS("http://www.w3.org/2000/svg", 'g')
+
+          const $line = document.createElementNS("http://www.w3.org/2000/svg", 'line')
+          const $text = document.createElementNS("http://www.w3.org/2000/svg", 'text')
+
+          let ratio = averageExpense / topOfLabel
+          const length = startY - endY
+
+          $line.setAttribute('x1', startX)
+          $line.setAttribute('y1', startY - length*ratio-4)
+          $line.setAttribute('x2', endX)
+          $line.setAttribute('y2', startY - length*ratio-4)
+          $line.setAttribute('class', 'average-line') 
+
+          $text.setAttribute('x', endX-40)
+          $text.setAttribute('y', startY - length*ratio-10)
+
+          $text.textContent = '이번달 월 평균 지출'
+
+          $g.appendChild($line)
+          $g.appendChild($text)
+          return $g
+        }
+        function makeMoneyLabel(){
+          const $g = document.createElementNS("http://www.w3.org/2000/svg", 'g')
+
+          let labelCount
+          let paddingTop
+
+          if(highestExpense < 50000){
+            labelCount = 5
+            paddingTop = 10000
+          }else if(highestExpense < 100000){
+            labelCount = 7
+            paddingTop = 30000
+          }else{
+            labelCount = 10
+            paddingTop = 50000
+          }
+
+          topOfLabel = highestExpense + paddingTop
+          
+          const intervalMoney = topOfLabel / labelCount
+          intervalY = Math.floor((startY - endY) / labelCount)
+
+          let currentMoney = 0
+
+          const paddingX = 60
+          const paddingY = 20
+          
+          const linePadding = 4
+          // let startTextY = startY - intervalY 
+          let startTextY = startY 
+          
+          while(labelCount+1){
+            const $text = document.createElementNS("http://www.w3.org/2000/svg", 'text')
+            const $line = document.createElementNS("http://www.w3.org/2000/svg", 'line')
+
+            $text.setAttribute('x', startX-paddingX)
+            $text.setAttribute('y', startTextY)
+            $text.textContent = currentMoney
+
+            $line.setAttribute('x1', startX)
+            $line.setAttribute('y1', startTextY-linePadding)
+            $line.setAttribute('x2', endX)
+            $line.setAttribute('y2', startTextY-linePadding)
+            $line.setAttribute('class', 'line') 
+
+            $g.appendChild($text)
+            $g.appendChild($line)
+
+            labelCount--
+            startTextY -= intervalY
+            currentMoney += intervalMoney 
+          }
+
+          return $g
+        }
+        function makeDateLabel(){
+          const $g = document.createElementNS("http://www.w3.org/2000/svg", 'g')
+          let labelCount = Math.ceil(endOfMonth / dateInterval)
+
+          let startDate = 1
+
+          let startTextX = startX + paddingX
+
+          while(labelCount){
+            const $text = document.createElementNS("http://www.w3.org/2000/svg", 'text')
+            $text.setAttribute('x', startTextX)
+            $text.setAttribute('y', startY+paddingY)
+            $text.textContent = `${currentMonth}.${startDate}`
+            $g.appendChild($text)
+            startDate += dateInterval
+            labelCount--
+            startTextX += 5*intervalX
+          }
+
+          return $g
+        }
+      </script>
+</body>
+</html>

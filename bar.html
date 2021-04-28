@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .bar-chart-box{
+            display:flex;
+        }
+        .chart-bar{
+            display: flex;
+            width: 100px;
+            height: 100px;
+            border: 1px solid black;
+        }
+        bar-chart-box{
+            display: flex;
+        }
+        p{
+            margin: 0;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+        .line{
+            transition: 0.8s;
+            animation: animate 1 4s;
+        }
+        @keyframes animate{
+            0%{
+                width: 0%;
+            }
+            100%{
+                width: 100%;
+            }
+        }
+        .list{
+            margin:0 10px;
+        }
+    </style>
+</head>
+<body>
+    <section class="bar-chart-box">
+        <div id="category-list" class="list"></div>
+        <div id="percent-list" class="list"></div>
+        <svg id="bar-chart">
+        </svg>
+        <div id="price-list" class="list"></div>
+    </section>
+    <script>
+        const total = 444790
+        const dataset = [{
+            category : '생활',
+            price : 315000,
+        },
+        {
+            category : '식비',
+            price : 72000,
+        },
+        {
+            category : '교통',
+            price : 18000,
+        },
+        {
+            category : '쇼핑/뷰티',
+            price : 18000,
+        },
+        {
+            category : '의료/건강',
+            price : 9000,
+        },];
+
+        const svgWidth = 500, svgHeight = 200, barPadding = 5;
+        const barHeight = (svgHeight / dataset.length);
+
+        const $svg = document.getElementById('bar-chart');
+        $svg.setAttribute('width', svgWidth)
+        $svg.setAttribute('height', svgHeight)
+
+        const $percentList = document.getElementById('percent-list')
+        const $catgoryList = document.getElementById('category-list')
+        const $priceList = document.getElementById('price-list')
+
+        for(let i = 0; i < dataset.length; i++){
+            const $rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+            const $animate = document.createElementNS("http://www.w3.org/2000/svg", 'animate')
+            
+            // $animate.setAttribute('repeatCount', "indefinite")
+
+            const percent = (dataset[i].price / total) * 100
+            // rect.setAttribute("y", svgHeight - percent)
+            $rect.setAttribute("width", percent+'%')
+            $rect.setAttribute("height", barHeight-barPadding)
+            const translate = [0, barHeight * i]
+            $rect.setAttribute("transform", "translate("+ translate +")")
+            console.log($rect.className)
+            $rect.className = 'line'
+
+            const pStyle = document.createElement('style')
+            pStyle.type = 'text/css'
+            pStyle.innerHTML = `.list-item{padding-top: ${((barHeight-barPadding-12))/2}px; height : ${barHeight-barPadding}px; margin-bottom : ${barPadding}px}`
+            document.getElementsByTagName('head')[0].appendChild(pStyle)
+
+            const $category = document.createElement("p")
+            $category.textContent = dataset[i].category
+            $category.className = 'list-item'
+
+            // $category.setAttribute("height", barHeight-barPadding + 'px')
+
+            const $percent = document.createElement('p')
+            $percent.textContent = Math.floor(percent) + '%'
+            $percent.className = 'list-item'
+
+            const $price = document.createElement("p")
+            $price.textContent = dataset[i].price + '원'
+            $price.className = 'list-item'
+
+            $animate.setAttribute('attribute', "CSS")
+            $animate.setAttribute('attributeName', "width")
+            $animate.setAttribute('from', "0")
+            $animate.setAttribute('to', percent+'%')
+            $animate.setAttribute('dur', "1s")
+
+            $rect.appendChild($animate)
+            $svg.appendChild($rect)
+            $catgoryList.appendChild($category)
+            $priceList.appendChild($price)
+            $percentList.appendChild($percent)
+        }
+    </script>
+</body>
+</html>
